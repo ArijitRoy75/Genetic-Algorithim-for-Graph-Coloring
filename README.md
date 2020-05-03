@@ -1,5 +1,5 @@
 # Genetic-Algorithim-for-Graph-Coloring
-It's repository for my major project on graph coloring problem as a part fulfillment of Bachelor of Computer Application.
+It's repository for my major project on graph coloring problem as a part fulfillment of Bachelor of Computer Application degree.
 
 Status: Work in Progress
 
