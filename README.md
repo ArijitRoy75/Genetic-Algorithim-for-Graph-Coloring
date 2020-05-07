@@ -7,5 +7,7 @@ Refenence: Hindi, Musa & Yampolskiy, Roman. (2012) “Genetic Algorithm Applied 
 
 Dataset: [myciel3.col](https://mat.tepper.cmu.edu/COLOR/instances/myciel3.col)
 
-Programming Languages used: C++, Python (Yet to be uploaded)
+Working Files: GAGCP.cpp (C++), major.py (python)
+
+Programming Languages used: C++, Python
 
