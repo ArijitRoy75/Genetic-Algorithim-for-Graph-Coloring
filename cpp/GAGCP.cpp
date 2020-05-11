@@ -1,63 +1,56 @@
-#include<iostream>//including required header files
-#include<conio.h>
-#include<bits/stdc++.h> 
-#include<cstdlib>
-#include<ctime>
-#include<math.h>
+#include<iostream>
+#include<bits/stdc++.h>
+#include<stdlib.h> 
+#include<time.h> 
 #include<fstream>
-#define EDGES 20
-#define VERTEX 11
-#define POP 20
-#define DATASET "myciel3.txt"
-int chrom[POP][VERTEX];
-int tempChrom[POP][VERTEX];
-int fitScore[POP];
-int tempContainer[VERTEX];
-int elite[VERTEX][VERTEX+1];
-int elcount=0;
+#include<strings.h>
 using namespace std;
 class Graph //Defining a Graph class
 {
     public:
-        int edges[EDGES][2];
-        bool adjmat[VERTEX][VERTEX];
-        int a,b;
+        vector<vector <int>> edges;
+        vector<vector <int>> adjmat;
+        int nvertex,nedges;
         Graph(string str);
         void printAdjMat();
-        bool isAdj(int,int);
-        //void printEdge();
+        //bool isAdj(int,int);
 };
 Graph :: Graph(string str)
 {
-    //int *adjmat=new int[][];
-    for (int a = 0; a < VERTEX; a++)
+    cout<<"Edges:"<<endl;
+    ifstream inData(str);
+
+    int x,y;
+    char e;
+    string s;
+    inData>>e>>s>>nvertex>>nedges;
+    adjmat.resize(nvertex,vector<int>(nvertex));
+    edges.resize(nedges,vector<int>(2));
+    for (int a = 0; a < nvertex; a++)
     {
-        for (int b = 0; b < VERTEX; b++)
+        for (int b = 0; b < nvertex; b++)
         {
             adjmat[a][b]=0;
         }      
     }
-    cout<<"Edges:"<<endl;
-    ifstream inData(str);
-    int x,y;
-    char e;
-    for (int i=0; i<EDGES; i++) {
-    	inData >> e >> edges[i][0] >> edges[i][1]; //Read x and y coordinates at position i
+    cout<<nvertex<<" "<<nedges<<endl;
+    for (int i=0; i<nedges; i++)
+    {
+    	inData >> e >> x >> y;
+        edges[i][0]=x;
+        edges[i][1]=y;
         cout << edges[i][0] <<"\t"<< edges[i][1] << endl;
-        x=edges[i][0];
-        y=edges[i][1]; //Output the x and y coordinates read above
         adjmat[x-1][y-1]=1;
         adjmat[y-1][x-1]=1;
     }
-    cout<<endl;
     inData.close();
 }
 void Graph :: printAdjMat(){
     cout<<"Adjacent Matrix:"<<endl;
     int c=1;
-    for (int i = 0; i < VERTEX+1; i++)
+    for (int i = 0; i < nvertex+1; i++)
     {
-        for (int j = 0; j < VERTEX+1; j++)
+        for (int j = 0; j < nvertex+1; j++)
         {
             if(i==0)
 			{
@@ -77,15 +70,54 @@ void Graph :: printAdjMat(){
 		cout<<endl;      
     }
 }
-bool Graph::isAdj(int a, int b)
+class GAGCP
 {
-    if(adjmat[a][b])
-        return 1;
-    else
-        return 0;
-    
-}
-void genChrom() //generate chromosomes
+    public:
+        int POP,VERTEX;
+        vector<vector <int>> chrom;
+        vector<vector <int>> parent1;
+        vector<vector <int>> parent2;
+        vector<vector <int>> fitScore;
+        vector<vector <int>> adjmat;
+        vector<int> validColors;
+        vector<int> adjColors;
+        vector<int> allColors;
+        void genChrom(); //generate 
+        int countDistinct(vector<int>, int);
+        void printChrom();
+        void printFitness();
+        void printparent1();
+        void printparent2();
+        bool elitism();
+        bool fitness();
+        void crossover();
+        void selection();
+        void mutation1();
+        void run();
+        GAGCP(Graph const &g1)
+        {
+            POP=g1.nvertex;
+            VERTEX=g1.nvertex;
+            POP=POP+(POP%2);
+            adjmat.resize(VERTEX,vector<int>(VERTEX));
+            fitScore.resize(POP,vector<int>(2));
+            chrom.resize(POP,vector<int>(VERTEX));
+            parent1.resize(POP,vector<int>(VERTEX));
+            parent2.resize(POP,vector<int>(VERTEX));
+            allColors.resize(VERTEX);
+            adjColors.resize(VERTEX);
+            validColors.resize(VERTEX);
+            for(int i=0;i<VERTEX;i++)
+            {
+                for (int j = 0; j < VERTEX; j++)
+                {
+                    adjmat[i][j]=g1.adjmat[i][j];
+                    //cout<<adjmat[i][j]<<" ";
+                }
+            }
+        }
+};
+void GAGCP::genChrom()
 {
     for (int i = 0; i < POP; i++)
     {
@@ -93,13 +125,44 @@ void genChrom() //generate chromosomes
         {
             chrom[i][j]=(rand()%VERTEX)+1;
         }
+    }
+}
+void GAGCP::printChrom()
+{
+    cout<<"\nChromosomes Generated:"<<endl;
+    int i,j;
+    for (int i = 0; i < POP; i++)
+    {
+        for (int j = 0; j < VERTEX; j++)
+        {
+            cout<<chrom[i][j]<<"\t";
+        }
+        cout<<endl;
     }    
 }
-int countDistinct(int arr[], int n) 
+bool GAGCP::elitism()
+{
+	int i,ind;
+	int max=0;
+    //fflush(stdin);
+	for(i=0;i<POP;i++)
+	{
+		if(max<fitScore[i][0])
+		{
+			max=fitScore[i][0];
+			ind=i;
+		}
+	}
+    if (max>4)
+        return 0;
+    else
+        return 1;
+    
+}
+int GAGCP::countDistinct(vector<int> arr,int n) 
 { 
 	// Creates an empty hashset 
 	unordered_set<int> s; 
-
 	// Traverse the input array 
 	int res = 0; 
 	for (int i = 0; i < n; i++) { 
@@ -114,53 +177,9 @@ int countDistinct(int arr[], int n)
 
 	return res; 
 }
-void printChromatic(){
-    cout<<"chromatic number"<<endl;
-    for (int i = 0; i < POP; i++)
-    {
-        int n = sizeof(chrom[i]) / sizeof(chrom[0][0]);
-        cout <<i<<"\t"<< countDistinct(chrom[i], n)<<endl; 
-    }
-}
-void printChrom()
+bool GAGCP::fitness()
 {
-    cout<<"Chromosomes Generated:"<<endl;
-    int i,j;
-    for (int i = 0; i < POP; i++)
-    {
-        for (int j = 0; j < VERTEX; j++)
-        {
-            cout<<chrom[i][j]<<"\t";
-        }
-        cout<<endl;
-    }    
-}
-bool elitism()
-{
-	int i,ind;
-	int max=0;
-    //fflush(stdin);
-	for(i=0;i<POP;i++)
-	{
-		if(max<fitScore[i])
-		{
-			max=fitScore[i];
-			ind=i;
-		}
-	}
-	for(i=0;i<VERTEX;i++)
-		elite[elcount][i]=chrom[ind][i];
-	elite[elcount][47]=max;
-	elcount++;
-    if (max>4)
-        return 0;
-    else
-        return 1;
-    
-}
-bool fitness(Graph g)
-{
-    cout<<"fitness()"<<endl;
+    //cout<<"fitness()"<<endl;
     int i,j,k,fit;
     //printChrom();
     for (k = 0; k < POP; k++)
@@ -171,60 +190,64 @@ bool fitness(Graph g)
             for (j = i+1; j<VERTEX; j++)
             {
                // cout<<(chrom[k][i]==chrom[k][j]);
-                if((chrom[k][i]==chrom[k][j]) && (g.isAdj(i,j)))
+                if((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
                 {
                    ++fit;
                 }
             }
         }
-        fitScore[k]=fit;
+        fitScore[k][0]=fit;
+        fitScore[k][1]=countDistinct(chrom[k], VERTEX);
     }
     bool z = elitism();
 }
-void printFitness(){
-    cout<<"Bad Edges Count:"<<endl;
+void GAGCP::printFitness()
+{
+    cout<<"\nBad Edges Count and Chromatic number:"<<endl;
     for (int i = 0; i < POP; i++)
     {
-        cout<<i<<"\t"<<fitScore[i]<<endl;
+        cout<<i<<"\t"<<fitScore[i][0]<<"\t"<<fitScore[i][1]<<endl;
     }
 }
-void crossover()
+void GAGCP::printparent1()
 {
-	int i,j,k,swap,pos,chr1,chr2;
-	double cp;
-    cout<<endl<<"crossover()"<<endl;
-	for(i=0;i<(POP/2);i++)
-	{
-		cp=(rand()%1000)/1000.0;
-		if(cp<0.7)
-		{
-			cout<<"Crossover Probability: "<<cp<<endl;
-            chr1=rand()%POP;
-			chr2=rand()%POP;
-			while(chr1==chr2)
-				chr1=rand()%POP;
-			pos=rand()%VERTEX;
-			for(k=pos;k<VERTEX;k++)
-			{
-				swap=chrom[chr1][k];
-				chrom[chr1][k]=chrom[chr2][k];
-				chrom[chr2][k]=swap;
-			}
-		}
-	}
+    cout<<"\nParent 1 Chromosomes Generated:"<<endl;
+    int i,j;
+    for (int i = 0; i < POP; i++)
+    {
+        for (int j = 0; j < VERTEX; j++)
+        {
+            cout<<parent1[i][j]<<"\t";
+        }
+        cout<<endl;
+    }    
 }
-void selection()
+void GAGCP::printparent2()
+{
+    cout<<"\nParent2 Chromosomes Generated:"<<endl;
+    int i,j;
+    for (int i = 0; i < POP; i++)
+    {
+        for (int j = 0; j < VERTEX; j++)
+        {
+            cout<<parent2[i][j]<<"\t";
+        }
+        cout<<endl;
+    }    
+}
+void GAGCP::selection()
 {
 	srand(time(NULL));
 	int i,j,r1,r2,select1,select2;
-	cout<<"parentSelection1()"<<endl<<endl;
-    for(i=0;i<POP;i+=2)
+    int count=0;
+	//cout<<"parentSelection1()"<<endl<<endl;
+    for(i=0;i<POP;i++)
     {
         r1=rand()%POP;
         r2=rand()%POP;
         while(r1==r2)
             r1=rand()%POP;
-        if(fitScore[r1]<fitScore[r2])
+        if(fitScore[r1][0]<fitScore[r2][0])
             select1=r1;
         else
             select1=r2;
@@ -232,153 +255,143 @@ void selection()
         r2=rand()%POP;
         while(r1==r2)
             r1=rand()%POP;
-        if(fitScore[r1]<fitScore[r2])
+        if(fitScore[r1][1]<fitScore[r2][1])
             select2=r1;
         else
             select2=r2;
+        //cout<<"Select1: "<<select1<<endl;
+        //cout<<"Select2: "<<select2<<endl;
+        //cout<<endl;
         for(j=0;j<VERTEX;j++)
         {
-            tempChrom[i][j]=chrom[select1][j];
-            tempChrom[i+1][j]=chrom[select2][j];
+            parent1[count][j]=chrom[select1][j];
+            parent2[count][j]=chrom[select2][j];
         }
+        count++;
     }
-    for(i=0;i<POP;i++)
-    {
-        for(j=0;j<VERTEX;j++)
+}
+void GAGCP::crossover()
+{
+	int i,j,k,swap,pos,chr1,chr2;
+	double cp;
+    //cout<<endl<<"crossover()"<<endl;
+	for(i=0;i<POP;i++)
+	{
+		pos=rand()%VERTEX;
+        for (k = 0; k < pos; k++)
         {
-            chrom[i][j]=tempChrom[i][j];
+            chrom[i][k]=parent1[i][k];
+        }
+		for(k=pos;k<VERTEX;k++)
+		{
+			chrom[i][k]=parent2[i][k];
+		}
+	}
+}
+void GAGCP::mutation1()
+{
+    //cout<<endl<<"mutation1"<<endl;
+    int valid,adj,all=VERTEX;
+    int s,c,d,i,j,k,flag;
+    for (int x = 0; x < VERTEX; x++)
+    {
+            allColors[x]=x+1;
+    }
+    for (int x = 0; x < VERTEX; x++)
+    {
+        adjColors[x]=0;
+        validColors[x]=0;
+    }
+    for (k = 0; k < POP; k++)
+    {
+        adj=0;
+        for(i=0;i<VERTEX-1;i++)
+        {
+            for (j = i+1; j< VERTEX; j++)
+            {
+                if ((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
+                {
+                    //cout<<chrom[k][j]<<endl;
+                    flag=1;
+                    for (int x = 0; x < adj; x++)
+                    { 
+                        if(adjColors[x]==chrom[k][j]){
+                            flag=0;
+                        }
+                    }
+                    if(flag==1){
+                        adjColors[adj]=chrom[k][j];
+                        adj++;
+                    }        
+                }        
+            }
+        }
+        valid=0;
+        for (i = 0; i < VERTEX; i++)
+        {
+                flag=1;
+                for(j=0; j<adj; j++)
+                {
+                    if(allColors[i]==adjColors[j])
+                    {
+                       flag=0;
+                    }
+                }
+                if(flag==1)
+                {
+                    validColors[valid]=allColors[i];
+                    valid++;
+                }
+        }
+        if(valid!=0)
+        {
+            for(i=0;i<VERTEX-1;i++)
+            {
+                for (j = i+1; j< VERTEX; j++)
+                {
+                    adj=0;
+                    if ((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
+                    {
+                    
+                        s=(rand()%valid);
+                        chrom[k][j]=validColors[s];
+                    }
+                }        
+            }
+        }
+        for ( i = 0; i < VERTEX; i++)
+        {
+            validColors[i]=0;
         }
     }
 }
-void mutation(Graph g, bool m)
+void GAGCP::run()
 {
-    int i,j,k,flag;
-    double mp;
-    if(m==1)
+    srand(time(0));
+    genChrom();
+    //printChrom();
+    for(int i=0;i<500;i++)
     {
-        cout<<endl<<"mutation1"<<endl;
-        int valid,adj,all=VERTEX;
-        int s,c,d;
-        int validColors[VERTEX],adjColors[VERTEX],allColors[VERTEX];
-        for (int x = 0; x < VERTEX; x++)
-        {
-            allColors[x]=x+1;
-        }
-        for (int x = 0; x < VERTEX; x++)
-        {
-            adjColors[x]=0;
-            validColors[x]=0;
-        }
-        for (k = 0; k < POP; k++)
-        {
-            mp=(rand()%1000)/1000.0;
-            if(mp<0.05)
-            {
-                cout<<"Mutation Probability :"<<mp<<endl;
-                adj=0;
-                for(i=0;i<VERTEX-1;i++)
-                {
-                    for (j = i+1; j< VERTEX; j++)
-                    {
-                        if ((chrom[k][i]==chrom[k][j]) && (g.isAdj(i,j)))
-                        {
-                            //adjColors[adj]=chrom[k][j];
-                            cout<<chrom[k][j]<<endl;
-                            flag=1;
-                            for (int x = 0; x < adj; x++)
-                            { 
-                                if(adjColors[x]==chrom[k][j]){
-                                    flag=0;
-                                }
-                            }
-                            if(flag==1){
-                                adjColors[adj]=chrom[k][j];
-                                adj++;
-                            }        
-                        }        
-                    }
-                }
-                valid=0;
-                for (i = 0; i < VERTEX; i++)
-                {
-                    flag=1;
-                    for(j=0; j<adj; j++)
-                    {
-                        if(allColors[i]==adjColors[j])
-                        {
-                           flag=0;
-                        }
-                    }
-                    if(flag==1)
-                    {
-                        validColors[valid]=allColors[i];
-                        valid++;
-                    }
-                }
-                for(i=0;i<VERTEX;i++)
-                {
-                    for (j = i+1; j< VERTEX; j++)
-                    {
-                        adj=0;
-                        if ((chrom[k][i]==chrom[k][j]) && (g.isAdj(i,j)))
-                        {
-                            s=(rand()%valid);
-                            chrom[k][j]=validColors[s];
-                        }        
-                    }
-                }
-                for ( i = 0; i < VERTEX; i++)
-                {
-                    validColors[i]=0;
-                }
-            }
-        }
+        fitness();
+        //printFitness();
+        selection();
+        //printparent1();
+        //printparent2();
+        crossover();
+        //printChrom();
+        mutation1();
+        //printChrom();
     }
-    else
-    {
-        cout<<endl<<"mutation2"<<endl;
-        for (k = 0; k < POP; k++)
-        {
-            mp=(rand()%1000)/1000.0;
-            if(mp<0.05)
-            {
-                cout<<"Mutation Probability :"<<mp<<endl;
-                for(i=0;i<VERTEX-1;i++)
-                {
-                    for (j = i+1; j< VERTEX; j++)
-                    {
-                        if ((chrom[k][i]==chrom[k][j]) && (g.isAdj(i,j)))
-                        {
-                            chrom[k][j]=(rand()%VERTEX)+1;
-                            //cout<<"successful"<<endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
+    fitness();
+    printFitness();
 }
 int main()
 {
     bool z;
-    Graph g1(DATASET);
-    g1.printAdjMat();
+    Graph g1("queen5_5.col");
+    //g1.printAdjMat();
+    GAGCP ga(g1);
+    ga.run();
     cout<<endl<<endl;
-    srand(time(0));  //123
-    genChrom();
-    printChrom();
-    z=fitness(g1);
-    printChromatic();
-    for (int j = 0; j < 50; j++)
-    {
-        cout<<"Generation: "<<j<<endl<<endl<<endl;
-        selection();
-        crossover();
-        mutation(g1,z);
-        z=fitness(g1);
-    }
-    printChrom();
-    printChromatic();
-    printFitness();
-    getch(); 
+    srand(time(0)); 
 }
