@@ -7,7 +7,6 @@
 using namespace std;
 int main()
 {
-    bool z;
     clock_t start, end;
     Graph g1("myciel5.col");
     //g1.printAdjMat();
