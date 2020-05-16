@@ -66,7 +66,7 @@ void Graph :: printAdjMat()
 class GAGCP
 {
     public:
-        int POP,VERTEX;
+        int POP,VERTEX,iter;
         vector<vector <int>> chrom;
         vector<vector <int>> parent1;
         vector<vector <int>> parent2;
@@ -75,7 +75,7 @@ class GAGCP
         vector<int> validColors;
         vector<int> adjColors;
         vector<int> allColors;
-        GAGCP(Graph const &g1);
+        GAGCP(Graph const &g1, int iter);
         void genChrom(); //generate chromosomes
         int countDistinct(vector<int>, int);//counts chromatic number
         void evalFitness();
@@ -89,9 +89,10 @@ class GAGCP
         void printParent2();
         
 };
-GAGCP::GAGCP(Graph const &g1)
+GAGCP::GAGCP(Graph const &g1, int iter)
 {
     POP=g1.nvertex;
+    this->iter=iter;
     VERTEX=g1.nvertex;
     POP=POP+(POP%2);
     adjmat.resize(VERTEX,vector<bool>(VERTEX));
@@ -322,12 +323,16 @@ void GAGCP::mutation1()
 void GAGCP::run()
 {
     srand(time(0));
-    genChrom();
-    //printChrom();
-    for(int i=0;i<600;i++)
+    for(int i=0;i<iter;i++)
     {
-        evalFitness();
-        //printFitness();
+        if(i==0)
+        {
+            genChrom();
+            //printChrom();
+            evalFitness();
+            //printFitness();
+            continue;
+        }
         parentSelection1();
         //printParent1();
         //printParent2();
@@ -335,6 +340,8 @@ void GAGCP::run()
         //printChrom();
         mutation1();
         //printChrom();
+        evalFitness();
+        //printFitness();
     }
     evalFitness();
     printFitness();
@@ -344,7 +351,7 @@ int main()
     clock_t start, end;
     Graph g("myciel4.col");
     g.printAdjMat();
-    GAGCP ga(g);
+    GAGCP ga(g,600);
     start=clock();
     ga.run();
     end=clock();
