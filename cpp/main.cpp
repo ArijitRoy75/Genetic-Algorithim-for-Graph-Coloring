@@ -78,9 +78,9 @@ class GAGCP
         GAGCP(Graph const &g1);
         void genChrom(); //generate chromosomes
         int countDistinct(vector<int>, int);//counts chromatic number
-        void fitness();
+        void evalFitness();
         void crossover();
-        void selection1();
+        void parentSelection1();
         void mutation1();
         void run();
         void printChrom();
@@ -124,9 +124,9 @@ void GAGCP::printChrom()
 {
     cout<<"\nChromosomes Generated:"<<endl;
     int i,j;
-    for (int i = 0; i < POP; i++)
+    for (i = 0; i < POP; i++)
     {
-        for (int j = 0; j < VERTEX; j++)
+        for (j = 0; j < VERTEX; j++)
         {
             cout<<chrom[i][j]<<"\t";
         }
@@ -146,7 +146,7 @@ int GAGCP::countDistinct(vector<int> arr,int n)
 	}
 	return res; 
 }
-void GAGCP::fitness()
+void GAGCP::evalFitness()
 {
     int i,j,k,fit;
     for (k = 0; k < POP; k++)
@@ -178,9 +178,9 @@ void GAGCP::printParent1()
 {
     cout<<"\nParent 1 Chromosomes Generated:"<<endl;
     int i,j;
-    for (int i = 0; i < POP; i++)
+    for (i = 0; i < POP; i++)
     {
-        for (int j = 0; j < VERTEX; j++)
+        for (j = 0; j < VERTEX; j++)
         {
             cout<<parent1[i][j]<<"\t";
         }
@@ -191,16 +191,16 @@ void GAGCP::printParent2()
 {
     cout<<"\nParent2 Chromosomes Generated:"<<endl;
     int i,j;
-    for (int i = 0; i < POP; i++)
+    for (i = 0; i < POP; i++)
     {
-        for (int j = 0; j < VERTEX; j++)
+        for (j = 0; j < VERTEX; j++)
         {
             cout<<parent2[i][j]<<"\t";
         }
         cout<<endl;
     }    
 }
-void GAGCP::selection1()
+void GAGCP::parentSelection1()
 {
 	int i,j,r1,r2,select1,select2;
     for(i=0;i<POP;i++)
@@ -247,12 +247,12 @@ void GAGCP::crossover()
 void GAGCP::mutation1()
 {
     int valid,adj,all=VERTEX;
-    int s,i,j,k,flag;
-    for (int x = 0; x < VERTEX; x++)
+    int s,i,j,k,flag,x;
+    for (x = 0; x < VERTEX; x++)
     {
             allColors[x]=x+1;
     }
-    for (int x = 0; x < VERTEX; x++)
+    for (x = 0; x < VERTEX; x++)
     {
         adjColors[x]=0;
         validColors[x]=0;
@@ -267,7 +267,7 @@ void GAGCP::mutation1()
                 if ((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
                 {
                     flag=1;
-                    for (int x = 0; x < adj; x++)
+                    for (x = 0; x < adj; x++)
                     { 
                         if(adjColors[x]==chrom[k][j]){
                             flag=0;
@@ -326,9 +326,9 @@ void GAGCP::run()
     //printChrom();
     for(int i=0;i<600;i++)
     {
-        fitness();
+        evalFitness();
         //printFitness();
-        selection1();
+        parentSelection1();
         //printParent1();
         //printParent2();
         crossover();
@@ -336,21 +336,20 @@ void GAGCP::run()
         mutation1();
         //printChrom();
     }
-    fitness();
+    evalFitness();
     printFitness();
 }
 int main()
 {
-    bool z;
     clock_t start, end;
-    Graph g("myciel3.col");
+    Graph g("myciel4.col");
     g.printAdjMat();
     GAGCP ga(g);
     start=clock();
     ga.run();
     end=clock();
     double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
-    cout << "Time taken by program is : " << fixed 
+    cout << "Execution Time : " << fixed 
          << time_taken << setprecision(5); 
     cout << " sec " << endl; 
 }
