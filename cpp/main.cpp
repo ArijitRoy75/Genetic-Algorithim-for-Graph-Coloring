@@ -5,19 +5,22 @@
 #include<fstream>
 #include<stdlib.h>
 #include<iomanip>
+#include<numeric>
 using namespace std;
 class Graph //Defining a Graph class
 {
     public:
+        string filename;
         vector<vector <int>> edges;
         vector<vector <bool>> adjmat;
-        int nvertex,nedges;
+        int nvertex,nedges,max_degree;
         Graph(string str);
         void printAdjMat();
 };
 Graph :: Graph(string str)//Graph Constructor
 {
     cout<<"Edges:"<<endl;
+    filename=str;
     ifstream inData(str);
     int x,y;
     char e;
@@ -35,6 +38,15 @@ Graph :: Graph(string str)//Graph Constructor
         adjmat[x-1][y-1]=1;
         adjmat[y-1][x-1]=1;
     }
+    int sum,max=0;
+    for (int i = 0; i < nvertex; i++)
+    {
+        sum=accumulate(adjmat[i].begin(),adjmat[i].end(),0);
+        if(max<sum)
+            max=sum;
+    }
+    max_degree=max;
+    cout<<"\nMax Degree: "<<max_degree<<endl;
     inData.close();
 }
 void Graph :: printAdjMat()
@@ -66,6 +78,7 @@ void Graph :: printAdjMat()
 class GAGCP
 {
     public:
+        string filename;
         int POP,VERTEX,iter;
         vector<vector <int>> chrom;
         vector<vector <int>> parent1;
@@ -87,10 +100,10 @@ class GAGCP
         void printFitness();
         void printParent1();
         void printParent2();
-        
 };
 GAGCP::GAGCP(Graph const &g1, int iter)
 {
+    filename=g1.filename;
     POP=g1.nvertex;
     this->iter=iter;
     VERTEX=g1.nvertex;
@@ -322,6 +335,7 @@ void GAGCP::mutation1()
 }
 void GAGCP::run()
 {
+    cout<<"File name: "<<filename<<endl;
     srand(time(0));
     for(int i=0;i<iter;i++)
     {
@@ -346,17 +360,135 @@ void GAGCP::run()
     evalFitness();
     printFitness();
 }
-int main()
+class ACOGCP
+{
+    public:
+        string filename;
+        vector<vector <bool>> adjmat;
+        vector<int> color;
+        int max_deg1,vertex,ncolor;
+        bool result;
+        ACOGCP(Graph const &g1);
+        bool check();
+        int countDistinct();
+        void compute();
+        void run();
+        void printColor();
+};
+ACOGCP::ACOGCP(Graph const &g1)
+{
+    filename=g1.filename;
+    max_deg1=g1.max_degree+1;
+    vertex=g1.nvertex;
+    adjmat.resize(vertex,vector<bool>(vertex));
+    color.resize(vertex,1);
+    for(int i=0; i<vertex; i++)
+    {
+        for (int j = 0; j < vertex; j++)
+        {
+            adjmat[i][j]=g1.adjmat[i][j];
+        }
+    }
+}
+void ACOGCP::compute()
+{
+    //cout<<"\ncompute()"<<endl;
+    int value, j, k;
+    bool result;
+    for (j = 1; j <vertex; j++)
+    {
+        ncolor=countDistinct();
+        result=check();
+        if (result==1)
+        {
+            return;
+        }
+        for (k = 0; k < vertex; k++)
+        {
+            if (j!=k)
+            {
+                value=adjmat[j][k]*color[k];
+                if (value==color[j])
+                {
+                    if (color[k]<=max_deg1)
+                        color[k]=color[k]+1;
+                    else
+                        color[k]=color[k]%(+max_deg1)+1;
+                    j=0;
+                    k=0;
+                }
+            }
+        }
+    }
+}
+int ACOGCP::countDistinct()
+{
+    unordered_set<int> s;  
+	int res = 0; 
+	for (int i = 0; i < vertex; i++)
+    { 
+		if (s.find(color[i]) == s.end())
+        { 
+			s.insert(color[i]); 
+			res++;
+		} 
+	}
+	return res;
+}
+bool ACOGCP::check()
+{
+    for(int i=0;i<(vertex-1);i++)
+    {
+        for (int j = i+1; j<vertex; j++)
+        {
+            if((color[i]==color[j]) && (adjmat[i][j]))
+            {
+               return 0;
+            }
+        }
+    }
+    return 1;
+}
+void ACOGCP::printColor()
+{
+    for (int j = 0; j < vertex; j++)
+    {
+        cout<<color[j]<<"\t";
+    }
+}
+void ACOGCP::run()
 {
     clock_t start, end;
-    Graph g("myciel4.col");
-    g.printAdjMat();
-    GAGCP ga(g,600);
+    //printColor();
+    cout<<"\nFile name:"<<filename<<endl;
     start=clock();
-    ga.run();
+    compute();
+    cout<<"\nChromatic Number: "<<countDistinct()<<endl;
+    result=check();
+        //cout<<"\n Bad edges: "<<result<<endl;
+    printColor();
+        //new_color=countDistinct(node);
+    //}while (result!=1);
     end=clock();
     double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
-    cout << "Execution Time : " << fixed 
+    cout << "\nExecution Time : " << fixed 
          << time_taken << setprecision(5); 
-    cout << " sec " << endl; 
+    cout << " sec " << endl;
+}
+
+int main()
+{
+    
+    Graph g("mug88_1.col");
+    //g.printAdjMat();
+    ACOGCP aco(g);
+    aco.run();
+    //GAGCP ga(g,600);
+    //start=clock();
+    //ga.run();
+    //end=clock();
+   // double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
+    //cout << "Execution Time : " << fixed 
+    //     << time_taken << setprecision(5); 
+    //cout << " sec " << endl; 
 }
