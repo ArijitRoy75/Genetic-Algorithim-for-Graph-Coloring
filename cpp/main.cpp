@@ -19,13 +19,21 @@ class Graph //Defining a Graph class
 };
 Graph :: Graph(string str)//Graph Constructor
 {
-    cout<<"Edges:"<<endl;
     filename=str;
     ifstream inData(str);
+    if(inData.fail())
+    {
+        cout<<"\nFilename doesn't exist!! Make Sure You have enterd correct filename....\n";
+        exit(1);
+    }
     int x,y;
     char e;
     string s;
-    inData>>e>>s>>nvertex>>nedges;
+    cout<<"Edges:"<<endl;
+    inData >> s;
+    while(s != "edge")
+            inData >> s;
+    inData>>nvertex>>nedges;
     adjmat.resize(nvertex,vector<bool>(nvertex,0));
     edges.resize(nedges,vector<int>(2));
     cout<<nvertex<<" "<<nedges<<endl;
@@ -34,7 +42,7 @@ Graph :: Graph(string str)//Graph Constructor
     	inData >> e >> x >> y;
         edges[i][0]=x;
         edges[i][1]=y;
-        cout << edges[i][0] <<"\t"<< edges[i][1] << endl;
+        //cout << edges[i][0] <<"\t"<< edges[i][1] << endl;
         adjmat[x-1][y-1]=1;
         adjmat[y-1][x-1]=1;
     }
@@ -48,6 +56,11 @@ Graph :: Graph(string str)//Graph Constructor
     max_degree=max;
     cout<<"\nMax Degree: "<<max_degree<<endl;
     inData.close();
+    if(max_degree+1==nvertex)
+    {
+        cout<<"\nChromatic Number:"<<nvertex;
+        exit(1);
+    }
 }
 void Graph :: printAdjMat()
 {
@@ -77,9 +90,10 @@ void Graph :: printAdjMat()
 }
 class GAGCP
 {
+    //Based on Hindi, Musa & Yampolskiy, Roman. (2012). Genetic Algorithm Applied to the Graph Coloring Problem. Midwest Artificial Intelligence and Cognitive Science Conference. 60. 
     public:
         string filename;
-        int POP,VERTEX,iter;
+        int POP,VERTEX,max_deg1;
         vector<vector <int>> chrom;
         vector<vector <int>> parent1;
         vector<vector <int>> parent2;
@@ -88,8 +102,9 @@ class GAGCP
         vector<int> validColors;
         vector<int> adjColors;
         vector<int> allColors;
-        GAGCP(Graph const &g1, int iter);
+        GAGCP(Graph const &g1);
         void genChrom(); //generate chromosomes
+        bool check();
         int countDistinct(vector<int>, int);//counts chromatic number
         void evalFitness();
         void crossover();
@@ -101,11 +116,11 @@ class GAGCP
         void printParent1();
         void printParent2();
 };
-GAGCP::GAGCP(Graph const &g1, int iter)
+GAGCP::GAGCP(Graph const &g1)
 {
     filename=g1.filename;
     POP=g1.nvertex;
-    this->iter=iter;
+    max_deg1=g1.max_degree+1;
     VERTEX=g1.nvertex;
     POP=POP+(POP%2);
     adjmat.resize(VERTEX,vector<bool>(VERTEX));
@@ -113,9 +128,9 @@ GAGCP::GAGCP(Graph const &g1, int iter)
     chrom.resize(POP,vector<int>(VERTEX));
     parent1.resize(POP,vector<int>(VERTEX));
     parent2.resize(POP,vector<int>(VERTEX));
-    allColors.resize(VERTEX);
-    adjColors.resize(VERTEX);
-    validColors.resize(VERTEX);
+    allColors.resize(max_deg1);
+    adjColors.resize(max_deg1);
+    validColors.resize(max_deg1);
     for(int i=0;i<VERTEX;i++)
     {
         for (int j = 0; j < VERTEX; j++)
@@ -130,7 +145,7 @@ void GAGCP::genChrom()
     {
         for (int j = 0; j < VERTEX; j++)
         {
-            chrom[i][j]=(rand()%VERTEX)+1;
+            chrom[i][j]=(rand()%max_deg1)+1;
         }
     }
 }
@@ -153,7 +168,8 @@ int GAGCP::countDistinct(vector<int> arr,int n)
 	int res = 0; 
 	for (int i = 0; i < n; i++)
     { 
-		if (s.find(arr[i]) == s.end()) { 
+		if (s.find(arr[i]) == s.end())
+        { 
 			s.insert(arr[i]); 
 			res++; 
 		} 
@@ -223,7 +239,7 @@ void GAGCP::parentSelection1()
         r2=rand()%POP;
         while(r1==r2)
             r1=rand()%POP;
-        if(fitScore[r1][0]<fitScore[r2][0])
+        if(fitScore[r1][1]<fitScore[r2][1])
             select1=r1;
         else
             select1=r2;
@@ -231,7 +247,7 @@ void GAGCP::parentSelection1()
         r2=rand()%POP;
         while(r1==r2)
             r1=rand()%POP;
-        if(fitScore[r1][1]<fitScore[r2][1])
+        if(fitScore[r1][0]<fitScore[r2][0])
             select2=r1;
         else
             select2=r2;
@@ -260,13 +276,13 @@ void GAGCP::crossover()
 }
 void GAGCP::mutation1()
 {
-    int valid,adj,all=VERTEX;
+    int valid,adj;
     int s,i,j,k,flag,x;
-    for (x = 0; x < VERTEX; x++)
+    for (x = 0; x < max_deg1; x++)
     {
             allColors[x]=x+1;
     }
-    for (x = 0; x < VERTEX; x++)
+    for (x = 0; x < max_deg1; x++)
     {
         adjColors[x]=0;
         validColors[x]=0;
@@ -295,7 +311,7 @@ void GAGCP::mutation1()
             }
         }
         valid=0;
-        for (i = 0; i < VERTEX; i++)
+        for (i = 0; i < max_deg1; i++)
         {
                 flag=1;
                 for(j=0; j<adj; j++)
@@ -317,51 +333,84 @@ void GAGCP::mutation1()
             {
                 for (j = i+1; j< VERTEX; j++)
                 {
-                    adj=0;
                     if ((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
                     {
-                    
                         s=(rand()%valid);
                         chrom[k][j]=validColors[s];
                     }
                 }        
             }
         }
-        for ( i = 0; i < VERTEX; i++)
+        for (i = 0; i < max_deg1; i++)
         {
             validColors[i]=0;
         }
     }
 }
+bool GAGCP::check()
+{
+    int flag=0;
+    for (int k = 0; k < POP; k++)
+    {
+        for(int i=0;i<(VERTEX-1);i++)
+        {
+            for (int j = i+1; j<VERTEX; j++)
+            {
+                if((chrom[k][i]==chrom[k][j]) && (adjmat[i][j]))
+                {
+                   return 1;
+                }
+            }
+        }
+    }
+    int elem=fitScore[0][1];
+    for (int i = 1; i < POP; i++)
+    {
+        if(elem!=fitScore[i][1])
+            return 1;
+    }
+    return 0;
+}
 void GAGCP::run()
 {
-    cout<<"File name: "<<filename<<endl;
+    clock_t start, end;
+    cout<<"\n\nGAGCP:";
+    cout<<"\nFile name: "<<filename<<endl;
+    start=clock();
     srand(time(0));
-    for(int i=0;i<iter;i++)
+    bool result;
+    int i=0;
+    do
     {
-        if(i==0)
+        ++i;
+        if(i==1)
         {
             genChrom();
-            //printChrom();
             evalFitness();
-            //printFitness();
-            continue;
+            result=check();
+            continue;   
         }
         parentSelection1();
-        //printParent1();
-        //printParent2();
         crossover();
-        //printChrom();
         mutation1();
-        //printChrom();
         evalFitness();
-        //printFitness();
+        result=check();
+    }while (result!=0);
+    end=clock();
+    cout<<"\nChromatic Number: "<<fitScore[0][1]<<endl;
+    for (int j = 0; j < VERTEX; j++)
+    {
+        cout<<chrom[0][j]<<"\t";
     }
-    evalFitness();
-    printFitness();
+    double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
+    cout << "\n\nNo. Of Generations: " <<i<<endl;
+    cout << "Execution Time : " << fixed 
+         << time_taken << setprecision(5); 
+    cout << " sec " << endl;
 }
 class ACOGCP
 {
+    //Based on Pal, Anindya & Ray, Biman & Zakaria, Nordin & Naono, Ken & Sarma, Samar. (2012). Generating Chromatic Number of a Graph using Ant Colony Optimization and Comparing the Performance with Simulated Annealing. Procedia Engineering. 50. 629–639. 10.1016/j.proeng.2012.10.069. 
     public:
         string filename;
         vector<vector <bool>> adjmat;
@@ -392,7 +441,6 @@ ACOGCP::ACOGCP(Graph const &g1)
 }
 void ACOGCP::compute()
 {
-    //cout<<"\ncompute()"<<endl;
     int value, j, k;
     bool result;
     for (j = 1; j <vertex; j++)
@@ -459,36 +507,26 @@ void ACOGCP::printColor()
 void ACOGCP::run()
 {
     clock_t start, end;
-    //printColor();
+    cout<<"\n\nACOGCP:";
     cout<<"\nFile name:"<<filename<<endl;
     start=clock();
     compute();
     cout<<"\nChromatic Number: "<<countDistinct()<<endl;
     result=check();
-        //cout<<"\n Bad edges: "<<result<<endl;
     printColor();
-        //new_color=countDistinct(node);
-    //}while (result!=1);
     end=clock();
     double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
     cout << "\nExecution Time : " << fixed 
          << time_taken << setprecision(5); 
     cout << " sec " << endl;
 }
-
-int main()
+int main(int argc,char* argv[])
 {
-    
-    Graph g("mug88_1.col");
+    string file=argv[1];
+    Graph g(file);
     //g.printAdjMat();
     ACOGCP aco(g);
     aco.run();
-    //GAGCP ga(g,600);
-    //start=clock();
-    //ga.run();
-    //end=clock();
-   // double time_taken = double(end - start)/double(CLOCKS_PER_SEC);
-    //cout << "Execution Time : " << fixed 
-    //     << time_taken << setprecision(5); 
-    //cout << " sec " << endl; 
+    GAGCP ga(g);
+    ga.run();
 }
