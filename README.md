@@ -8,7 +8,7 @@ Referenence:
 
 Dataset Instances: (https://mat.tepper.cmu.edu/COLOR/instances/myciel3.col)
 
-Working Files: GAGCP.cpp (C++), major.py (python)
+Working Files: main.cpp
 
-Programming Languages used: C++, Python
+Programming Languages used: C++
 
