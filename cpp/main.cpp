@@ -202,10 +202,10 @@ void ACOGCP::run()
     cout << "\n\nExecution Time: " << fixed 
          << time_taken << setprecision(5); 
     cout << " sec " << endl;
-    //fstream fstream_ob;
-    //fstream_ob.open("output.csv", ios::app);
-    //fstream_ob<<filename<<","<<vertex<<","<<edges<<","<<chromatic_number<<","<<time_taken<<endl;
-    //fstream_ob.close();
+    fstream fstream_ob;
+    fstream_ob.open("output.csv", ios::app);
+    fstream_ob<<filename<<","<<vertex<<","<<edges<<","<<chromatic_number<<","<<time_taken<<endl;
+    fstream_ob.close();
 }
 int main(int argc,char* argv[])
 {
